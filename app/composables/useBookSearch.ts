@@ -11,17 +11,29 @@ const DEBOUNCE_MS = 350
  *  - de-duplication (the API sometimes returns overlapping items)
  *  - stale-response guarding via a monotonically increasing request id
  *
- * The component stays declarative and just reacts to the returned refs.
+ * Search state (query, results, scroll position) is held in `useState` rather
+ * than local refs, so it SURVIVES navigation: opening a book and pressing
+ * "Back to search" restores the previous results and scroll position instead of
+ * resetting to an empty page. The query is also mirrored to the URL (`?q=`) so
+ * results are shareable and bookmarkable.
  */
 export function useBookSearch() {
-  const query = ref('')
-  const books = ref<BookSummary[]>([])
-  const totalItems = ref(0)
+  const route = useRoute()
+  const router = useRouter()
 
+  // ── Persistent state (shared across mounts via useState) ──
+  const query = useState<string>('search:query', () =>
+    typeof route.query.q === 'string' ? route.query.q : '',
+  )
+  const books = useState<BookSummary[]>('search:books', () => [])
+  const totalItems = useState<number>('search:totalItems', () => 0)
+  const hasSearched = useState<boolean>('search:hasSearched', () => false)
+  const scrollY = useState<number>('search:scrollY', () => 0)
+
+  // ── Transient per-view state (fine to reset on remount) ──
   const isLoading = ref(false) // initial load for a new query
   const isLoadingMore = ref(false) // subsequent pages
   const error = ref<string | null>(null)
-  const hasSearched = ref(false)
 
   const hasMore = computed(
     () => books.value.length > 0 && books.value.length < totalItems.value,
@@ -82,10 +94,19 @@ export function useBookSearch() {
     return fetchPage(true)
   }
 
+  // Debounced search + URL sync whenever the query changes.
   watch(query, (value) => {
+    const q = value.trim()
+
+    // Mirror the query into the URL (replace, so we don't spam history).
+    const current = typeof route.query.q === 'string' ? route.query.q : ''
+    if (current !== q) {
+      router.replace({ query: q ? { q } : {} })
+    }
+
     if (debounceTimer) clearTimeout(debounceTimer)
 
-    if (!value.trim()) {
+    if (!q) {
       books.value = []
       totalItems.value = 0
       hasSearched.value = false
@@ -97,7 +118,32 @@ export function useBookSearch() {
     debounceTimer = setTimeout(() => fetchPage(true), DEBOUNCE_MS)
   })
 
-  onScopeDispose(() => {
+  onMounted(() => {
+    const q = query.value.trim()
+    const urlQ = typeof route.query.q === 'string' ? route.query.q : ''
+
+    // Arrived via a plain link (e.g. "Back to search" → "/") while a query is
+    // still in shared state: reflect it back into the URL so it stays shareable.
+    if (q && !urlQ) {
+      router.replace({ query: { q } })
+    }
+
+    // Coming from a shared URL (or a hard refresh with ?q=): run the search.
+    if (q && !hasSearched.value) {
+      fetchPage(true)
+      return
+    }
+
+    // Returning from a detail page: results are already in shared state —
+    // just restore the scroll position the user left from.
+    if (books.value.length && scrollY.value > 0) {
+      nextTick(() => window.scrollTo({ top: scrollY.value }))
+    }
+  })
+
+  // Remember scroll position so we can restore it when the user returns.
+  onBeforeUnmount(() => {
+    if (import.meta.client) scrollY.value = window.scrollY
     if (debounceTimer) clearTimeout(debounceTimer)
   })
 
