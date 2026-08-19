@@ -93,31 +93,15 @@ server/api/books/            Key-hiding proxy routes
 
 ## Tradeoffs
 
-### Accepted
-
 - **Infinite scroll over pagination** — better for browsing; `IntersectionObserver` keeps it lightweight.
 - **Lazy fetch on the detail page** (`useLazyAsyncData`) — navigation isn't blocked and a skeleton shows immediately, at the cost of the very first paint on a hard refresh not being server-rendered with data.
 - **Search state in `useState`** — instant restore on back-navigation with no refetch flash; state is in-memory (cleared on full reload, though the URL query re-runs the search).
-
-### With more time
-
-- Add unit tests (store logic, formatters) and a component/interaction test or two.
-- Add request caching / rate-limit handling on the server routes.
-- Server-render the detail page's initial data for better first-load SEO.
-- Richer description rendering and a skeleton for the shortlist page.
-
-## Status
-
-- ✅ Core features complete: search, detail, shortlist (persisted), responsive + accessible UI, error page, Storybook.
-- ✅ **Deployed** to Cloudflare Workers — [live demo](https://book-discovery.ravisinghdas2026.workers.dev/).
-- ⏳ **Screen recording** — pending.
-- ❌ No automated tests yet (see Tradeoffs).
 
 ## Storybook
 
 Storybook runs as a **standalone Vue 3 + Vite** workshop (no Nuxt-specific integration). 8 components are documented across 23 stories.
 
-One gotcha worth noting: on this Vite 8 (Rolldown) setup, Storybook 10's `vue3-vite` framework did not auto-register `@vitejs/plugin-vue`, so `.vue` files reached the JS parser untransformed. The fix was to add the Vue plugin explicitly in `.storybook/main.ts` (`viteFinal`). Storybook's own `init` CLI also hangs when it detects Nuxt, so the config was set up manually. Both were resolved well within the time box.
+One gotcha worth noting: on this Vite 8 (Rolldown) setup, Storybook 10's `vue3-vite` framework did not auto-register `@vitejs/plugin-vue`, so `.vue` files reached the JS parser untransformed. The fix was to add the Vue plugin explicitly in `.storybook/main.ts` (`viteFinal`). Storybook's own `init` CLI also hangs when it detects Nuxt, so the config was set up manually.
 
 ## AI tooling
 
