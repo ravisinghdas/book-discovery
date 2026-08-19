@@ -26,6 +26,3 @@ logs
 
 # Storybook build output
 storybook-static
-
-# Local scratch / prototype workspace (not part of the app)
-shelf
