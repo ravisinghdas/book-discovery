@@ -7,7 +7,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@pinia/nuxt": "^1.0.2",
@@ -19,8 +21,12 @@
   },
   "devDependencies": {
     "@nuxtjs/google-fonts": "^3.2.0",
+    "@storybook/addon-docs": "^10.5.9",
+    "@storybook/vue3-vite": "^10.5.9",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.2.0",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "storybook": "^10.5.9",
     "tailwindcss": "^4.3.3"
   }
 }
