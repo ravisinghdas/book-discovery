@@ -1,98 +1,60 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import BookCard from './BookCard.vue'
-import type { GoogleBookVolume } from '~~/shared/types/book'
+import type { BookSummary } from '~~/shared/types/book'
 
 /**
- * Stories for BookCard — the result tile used across the search and shortlist
- * grids. These exercise the "missing data" paths that the Google Books API
- * throws at us in production (no cover, no author, overflowing titles).
+ * Stories for BookCard — the presentational result tile. These exercise the
+ * "missing data" paths the Google Books API produces (no cover, no author,
+ * overflowing titles) plus the shortlisted state.
  */
-
-// A fully-populated volume used as the happy-path baseline.
-const completeBook: GoogleBookVolume = {
-  id: 'complete-1',
-  volumeInfo: {
-    title: 'The Pragmatic Programmer',
-    authors: ['Andrew Hunt', 'David Thomas'],
-    publishedDate: '1999-10-30',
-    imageLinks: {
-      thumbnail:
-        'https://books.google.com/books/content?id=5wBQEp6ruIAC&printsec=frontcover&img=1&zoom=1&source=gbs_api'
-    }
-  }
+const baseBook: BookSummary = {
+  id: 'pd6-tAEACAAJ',
+  title: 'The Pragmatic Programmer',
+  authors: ['Andrew Hunt', 'David Thomas'],
+  thumbnail:
+    'https://books.google.com/books/content?id=5wBQEp6ruIAC&printsec=frontcover&img=1&zoom=1&source=gbs_api',
+  publishedYear: '1999',
 }
 
-const meta: Meta<typeof BookCard> = {
+const meta = {
   title: 'UI/BookCard',
   component: BookCard,
   tags: ['autodocs'],
-  // Constrain width so the card renders at a realistic grid size.
-  decorators: [
-    () => ({ template: '<div style="max-width: 220px"><story /></div>' })
-  ],
-  args: {
-    book: completeBook
-  }
-}
+  argTypes: {
+    toggle: { action: 'toggle' },
+  },
+  // Constrain width so the 2/3 aspect card looks realistic in the canvas.
+  decorators: [() => ({ template: '<div style="width:220px"><story /></div>' })],
+  args: { book: baseBook, shortlisted: false },
+} satisfies Meta<typeof BookCard>
 
 export default meta
-type Story = StoryObj<typeof BookCard>
+type Story = StoryObj<typeof meta>
 
-/** All data present: cover, title, authors, year. */
 export const Default: Story = {}
 
-/** No cover art — falls back to the titled placeholder. */
-export const WithoutCover: Story = {
-  args: {
-    book: {
-      id: 'no-cover-1',
-      volumeInfo: {
-        title: 'A Book With No Cover Available',
-        authors: ['Jane Doe'],
-        publishedDate: '2018'
-      }
-    }
-  }
+export const Shortlisted: Story = {
+  args: { book: baseBook, shortlisted: true },
 }
 
-/** No listed author — shows the "Unknown Author" fallback. */
-export const WithoutAuthor: Story = {
-  args: {
-    book: {
-      id: 'no-author-1',
-      volumeInfo: {
-        title: 'An Anonymous Work',
-        publishedDate: '2012-05',
-        imageLinks: { thumbnail: completeBook.volumeInfo.imageLinks?.thumbnail }
-      }
-    }
-  }
+export const NoCover: Story = {
+  args: { book: { ...baseBook, thumbnail: null } },
 }
 
-/** Very long title — verifies the 2-line clamp. */
+export const NoAuthor: Story = {
+  args: { book: { ...baseBook, authors: [] } },
+}
+
 export const LongTitle: Story = {
   args: {
     book: {
-      id: 'long-title-1',
-      volumeInfo: {
-        title:
-          'A Remarkably and Unnecessarily Long Book Title That Keeps Going On and On to Test Line Clamping Behaviour',
-        authors: ['Verbose Author With A Long Name Too'],
-        publishedDate: '2021-01-15',
-        imageLinks: { thumbnail: completeBook.volumeInfo.imageLinks?.thumbnail }
-      }
-    }
-  }
+      ...baseBook,
+      title:
+        'A Remarkably Long Book Title That Keeps Going And Should Truncate Gracefully After Two Lines Without Breaking The Card Layout',
+    },
+  },
 }
 
-/** No metadata at all beyond a title — worst-case sparse record. */
-export const MinimalData: Story = {
-  args: {
-    book: {
-      id: 'minimal-1',
-      volumeInfo: {
-        title: 'Bare Minimum'
-      }
-    }
-  }
+export const NoYear: Story = {
+  args: { book: { ...baseBook, publishedYear: null } },
 }

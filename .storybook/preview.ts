@@ -8,11 +8,12 @@ import { h } from 'vue'
 import '../app/assets/css/main.css'
 
 /**
- * Bridge the Nuxt runtime pieces our components expect:
- *  - Pinia: ShortlistButton reads the shortlist store. (The `persist` option is
- *    a no-op here since the Nuxt persistence module isn't loaded — that's fine
- *    for isolated component rendering.)
- *  - NuxtLink: stubbed as a plain <a> so cards/links render without the router.
+ * Bridge the Nuxt runtime pieces our components expect, since Storybook runs
+ * plain Vue 3 (no Nuxt):
+ *  - Pinia: ShortlistButton reads the shortlist store.
+ *  - NuxtLink: stubbed as a plain <a> so cards/links render.
+ *  - ClientOnly: stubbed to render its default slot (Nuxt normally defers this
+ *    to the client; in Storybook we just render it directly).
  */
 setup((app) => {
   app.use(createPinia())
@@ -20,7 +21,12 @@ setup((app) => {
     props: { to: { type: [String, Object], default: '#' } },
     setup(props, { slots }) {
       return () => h('a', { href: typeof props.to === 'string' ? props.to : '#' }, slots.default?.())
-    }
+    },
+  })
+  app.component('ClientOnly', {
+    setup(_, { slots }) {
+      return () => slots.default?.()
+    },
   })
 })
 
@@ -29,18 +35,18 @@ const preview: Preview = {
     controls: {
       matchers: {
         color: /(background|color)$/i,
-        date: /Date$/i
-      }
+        date: /Date$/i,
+      },
     },
     backgrounds: {
-      default: 'page',
+      default: 'canvas',
       values: [
-        { name: 'page', value: '#F5F6FD' },
-        { name: 'white', value: '#FFFFFF' },
-        { name: 'dark', value: '#0F172A' }
-      ]
-    }
-  }
+        { name: 'canvas', value: '#f8f7ff' },
+        { name: 'white', value: '#ffffff' },
+        { name: 'dark', value: '#0f0a1e' },
+      ],
+    },
+  },
 }
 
 export default preview

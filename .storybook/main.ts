@@ -4,12 +4,12 @@ import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 
 /**
- * Standalone Storybook config (Vue 3 + Vite).
+ * Storybook config (Vue 3 + Vite).
  *
- * Deliberately NOT using any Nuxt-specific Storybook integration — per the
- * brief, we run Storybook as a plain Vue 3 + Vite workshop. Nuxt's auto-imports
- * (ref, computed, etc.) don't exist here, so stories import from 'vue' and we
- * alias the '~~' / '~' paths Storybook needs to resolve our component imports.
+ * We run Storybook as a plain Vue 3 + Vite workshop rather than through a
+ * Nuxt-specific integration. Nuxt's auto-imports (ref, computed, etc.) don't
+ * exist here, so stories import from 'vue' and we alias the '~~' / '~' paths
+ * Storybook needs to resolve our component imports.
  */
 const config: StorybookConfig = {
   stories: ['../app/components/**/*.stories.@(ts|js)'],
