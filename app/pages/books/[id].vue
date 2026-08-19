@@ -7,6 +7,15 @@ import { toBookDetails } from '~/utils/formatters'
 const route = useRoute()
 const id = computed(() => String(route.params.id))
 
+// Where the user came from — set via the `?from=` param on the card link.
+// Drives a matching "Back to …" link so navigation feels natural from both
+// the search results and the shortlist page.
+const cameFromShortlist = computed(() => route.query.from === 'shortlist')
+const backTo = computed(() => (cameFromShortlist.value ? '/shortlist' : '/'))
+const backLabel = computed(() =>
+  cameFromShortlist.value ? 'Back to shortlist' : 'Back to search',
+)
+
 // `lazy` so navigation isn't blocked and the skeleton is shown while the
 // request is in flight. Tradeoff (see README): the very first paint on a hard
 // refresh isn't server-rendered with data. Acceptable for a discovery UI.
@@ -25,9 +34,9 @@ useHead(() => ({
 
 <template>
   <div>
-    <!-- Back link -->
+    <!-- Back link — points to wherever the user arrived from -->
     <NuxtLink
-      to="/"
+      :to="backTo"
       class="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-content-muted transition hover:text-content"
     >
       <svg
@@ -40,7 +49,7 @@ useHead(() => ({
       >
         <path d="m15 18-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
-      Back to search
+      {{ backLabel }}
     </NuxtLink>
 
     <!-- Loading -->
@@ -56,10 +65,10 @@ useHead(() => ({
         The book may not exist or the request failed.
       </p>
       <NuxtLink
-        to="/"
+        :to="backTo"
         class="mt-4 inline-block rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-strong"
       >
-        Back to search
+        {{ backLabel }}
       </NuxtLink>
     </div>
 

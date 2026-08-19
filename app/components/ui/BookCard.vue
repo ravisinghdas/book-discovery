@@ -14,13 +14,22 @@ const props = withDefaults(
   defineProps<{
     book: BookSummary
     shortlisted?: boolean
+    /** Where this card is shown — lets the detail page render a matching
+     *  "Back to …" link. Defaults to the search page. */
+    from?: 'search' | 'shortlist'
   }>(),
-  { shortlisted: false },
+  { shortlisted: false, from: 'search' },
 )
 
 const emit = defineEmits<{
   toggle: [book: BookSummary]
 }>()
+
+// Only add the ?from= param when it's not the default, keeping search URLs clean.
+const detailLink = computed(() => ({
+  path: `/books/${props.book.id}`,
+  query: props.from === 'shortlist' ? { from: 'shortlist' } : {},
+}))
 
 const imageFailed = ref(false)
 const authorLine = computed(() => formatAuthors(props.book.authors))
@@ -40,7 +49,7 @@ function onToggle(event: MouseEvent) {
 
 <template>
   <NuxtLink
-    :to="`/books/${book.id}`"
+    :to="detailLink"
     class="group relative flex flex-col overflow-hidden rounded-card bg-surface ring-1 ring-border transition duration-200 hover:-translate-y-1 hover:shadow-md hover:ring-primary/40 focus-visible:-translate-y-1"
   >
     <!-- Cover -->

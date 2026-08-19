@@ -56,6 +56,24 @@
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
+
+  /*
+   * Tailwind v4 resets buttons to `cursor: default`. Restore the pointer cursor
+   * on interactive elements so hovering a button/link feels clickable.
+   * Disabled controls keep the default (not-allowed) cursor.
+   */
+  button:not(:disabled),
+  [role='button']:not(:disabled),
+  a[href],
+  label[for],
+  summary {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role='button'][aria-disabled='true'] {
+    cursor: not-allowed;
+  }
 }
 
 /* Page transition */

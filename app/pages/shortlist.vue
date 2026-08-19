@@ -39,6 +39,7 @@ function onToggle(book: BookSummary) {
           :key="book.id"
           :book="book"
           :shortlisted="true"
+          from="shortlist"
           @toggle="onToggle"
         />
       </BookGrid>
