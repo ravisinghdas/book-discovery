@@ -3,105 +3,51 @@ import { useShortlistStore } from '~~/stores/shortlist'
 
 /**
  * Top navigation bar.
- * - Brand wordmark links home.
- * - Home / Shortlist nav with an active-route highlight.
- * - Shortlist link shows a live count badge (only when > 0).
- *
- * `count` is read from the persisted Pinia store, so it stays in sync across
- * every page and survives refreshes.
+ * - No brand logo here by design — the "Book Discovery" wordmark lives in the
+ *   hero on the home page, keeping the chrome minimal.
+ * - Right-aligned Home / Shortlist tabs with an active-route underline.
+ * - The shortlist count badge is wrapped in <ClientOnly>: the count comes from
+ *   a localStorage-persisted store that only hydrates in the browser, so
+ *   rendering it during SSR would cause a hydration mismatch.
  */
-const shortlist = useShortlistStore()
+const store = useShortlistStore()
 </script>
 
 <template>
-  <header
-    class="sticky top-0 z-40 border-b border-hairline bg-page/80 backdrop-blur"
-  >
-    <div
-      class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6"
-    >
-      <!-- Brand -->
-      <NuxtLink
-        to="/"
-        class="flex items-center gap-2 rounded-button"
-        aria-label="Book Discovery home"
-      >
-        <span
-          class="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-brand-cyan to-brand-teal text-white"
-          aria-hidden="true"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="h-5 w-5"
-          >
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-          </svg>
-        </span>
-        <span
-          class="bg-gradient-to-r from-brand-cyan to-brand-teal bg-clip-text text-lg font-extrabold tracking-tight text-transparent"
-        >
-          Book Discovery
-        </span>
-      </NuxtLink>
-
-      <!-- Navigation -->
-      <nav class="flex items-center gap-1" aria-label="Primary">
+  <header class="sticky top-0 z-40 border-b border-border bg-canvas/90 backdrop-blur">
+    <div class="mx-auto flex h-14 w-full max-w-6xl items-stretch justify-end px-4 sm:px-6 lg:px-8">
+      <nav class="flex items-stretch">
         <NuxtLink
           to="/"
-          class="flex items-center gap-1.5 rounded-button px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-ink"
-          active-class="bg-primary/10 text-primary"
-          exact-active-class="bg-primary/10 text-primary"
+          class="flex items-center gap-2 border-b-2 border-transparent px-4 text-sm font-semibold tracking-wide text-content-muted transition-colors hover:border-primary/40 hover:bg-primary/8 hover:text-content"
+          active-class="border-primary bg-primary/10 text-content"
+          exact
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="h-4 w-4"
-            aria-hidden="true"
-          >
-            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <path d="M9 22V12h6v10" />
+          <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 12L12 3l9 9" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M9 21V12h6v9" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M5 10v11h14V10" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-          <span>Home</span>
+          <span class="hidden sm:inline">Home</span>
         </NuxtLink>
 
         <NuxtLink
           to="/shortlist"
-          class="relative flex items-center gap-1.5 rounded-button px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-ink"
-          active-class="bg-primary/10 text-primary"
+          class="flex items-center gap-2 border-b-2 border-transparent px-4 text-sm font-semibold tracking-wide text-content-muted transition-colors hover:border-primary/40 hover:bg-primary/8 hover:text-content"
+          active-class="border-primary bg-primary/10 text-content"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="h-4 w-4"
-            aria-hidden="true"
-          >
-            <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1Z" stroke-linejoin="round" />
           </svg>
-          <span>Shortlist</span>
-          <span
-            v-if="shortlist.count > 0"
-            class="ml-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-xs font-semibold text-white"
-            :aria-label="`${shortlist.count} saved`"
-          >
-            {{ shortlist.count }}
-          </span>
+          <span class="hidden sm:inline">Shortlist</span>
+          <ClientOnly>
+            <span
+              v-if="store.count > 0"
+              class="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-white"
+            >
+              {{ store.count }}
+            </span>
+          </ClientOnly>
         </NuxtLink>
       </nav>
     </div>

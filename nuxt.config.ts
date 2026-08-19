@@ -45,7 +45,8 @@ export default defineNuxtConfig({
           name: 'description',
           content: 'Search millions of books and save the ones that matter to your personal shortlist.'
         }
-      ]
+      ],
+      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]
     },
     pageTransition: { name: 'page', mode: 'out-in' }
   }

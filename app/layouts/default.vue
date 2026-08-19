@@ -1,29 +1,17 @@
 <script setup lang="ts">
 import AppHeader from '~/components/layout/AppHeader.vue'
-import AppFooter from '~/components/layout/AppFooter.vue'
 
 /**
- * Default layout — app shell shared by every page.
- * Sticky header, flexible main region, footer pinned to the bottom on short pages.
- * The skip link lets keyboard users jump straight to content.
+ * Default layout — the app shell shared by every page.
+ * Sticky header + a centred, responsive main content column.
  */
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-page">
-    <a
-      href="#main"
-      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-button focus:bg-primary focus:px-4 focus:py-2 focus:text-white"
-    >
-      Skip to content
-    </a>
-
+  <div class="flex min-h-dvh flex-col bg-canvas">
     <AppHeader />
-
-    <main id="main" class="flex-1">
+    <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
       <slot />
     </main>
-
-    <AppFooter />
   </div>
 </template>

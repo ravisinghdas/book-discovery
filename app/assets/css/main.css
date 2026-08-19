@@ -1,67 +1,88 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /*
- * Design tokens (Tailwind v4 CSS-first config).
- * Everything visual references these — no arbitrary values in markup.
- *
- * Core brand tokens follow the blueprint (indigo primary, amber accent).
- * The teal/cyan brand gradient + light page surface match the reference design.
+ * Design tokens — deep navy + electric violet + golden amber.
+ * Modern, premium feel inspired by Notion, Linear, and Readwise.
  */
 @theme {
-  /* Brand / interactive */
-  --color-primary: #4F46E5;
-  --color-primary-dark: #3730A3;
-  --color-accent: #F59E0B;
-
-  /* Brand wordmark gradient (cyan -> teal) */
-  --color-brand-cyan: #06B6D4;
-  --color-brand-teal: #0D9488;
+  /* Brand */
+  --color-primary: #7c3aed;        /* violet */
+  --color-primary-strong: #6d28d9;
+  --color-primary-soft: #a78bfa;
+  --color-accent: #f59e0b;         /* amber */
+  --color-accent-strong: #d97706;
 
   /* Surfaces */
-  --color-background: #0F172A; /* dark sections */
-  --color-page: #F5F6FD;       /* app background (light lavender) */
-  --color-surface: #1E293B;    /* dark cards */
-  --color-surface-light: #FFFFFF; /* light cards */
+  --color-canvas: #f8f7ff;         /* barely-there violet tint */
+  --color-surface: #ffffff;
+  --color-surface-raised: #f0effe;
+  --color-surface-hover: #e5e3fc;
 
-  /* Text */
-  --color-ink: #0F172A;        /* primary text */
-  --color-muted: #64748B;      /* secondary text */
+  /* Content / text */
+  --color-content: #0f0a1e;        /* deep navy-black */
+  --color-content-muted: #4b4569;  /* muted violet-grey */
+  --color-content-subtle: #8b82a7; /* faded */
 
-  /* Lines */
-  --color-hairline: #E7E8F4;   /* subtle borders */
+  /* Borders */
+  --color-border: #e2dff5;
+  --color-border-strong: #c4bfea;
+
+  /* Feedback */
+  --color-danger: #dc2626;
 
   /* Typography */
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   /* Radii */
-  --radius-card: 8px;
-  --radius-button: 6px;
+  --radius-card: 0.875rem;
+  --radius-pill: 9999px;
 }
 
-/* Base element defaults */
-html {
-  font-family: var(--font-sans);
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background-color: var(--color-canvas);
+    color: var(--color-content);
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
 }
 
-body {
-  background-color: var(--color-page);
-  color: var(--color-ink);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Page fade transition (wired via app.pageTransition in nuxt.config) */
+/* Page transition */
 .page-enter-active,
 .page-leave-active {
-  transition: opacity 200ms ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 .page-enter-from,
 .page-leave-to {
   opacity: 0;
+  transform: translateY(8px);
 }
 
-/* Consistent, visible focus ring for keyboard users */
-:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+/* Skeleton shimmer */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+.skeleton {
+  background-color: var(--color-surface-raised);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+/* Gradient text utility — teal to cyan */
+.text-gradient {
+  background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
