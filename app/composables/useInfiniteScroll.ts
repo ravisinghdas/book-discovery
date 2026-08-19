@@ -1,56 +1,51 @@
 import type { Ref } from 'vue'
 
+interface UseInfiniteScrollOptions {
+  /** Called when the sentinel scrolls into view and loading is allowed. */
+  onLoadMore: () => void
+  /** Gate that decides whether a load should actually fire. */
+  canLoadMore: () => boolean
+  /** Distance from the viewport at which to trigger (default 300px). */
+  rootMargin?: string
+}
+
 /**
- * useInfiniteScroll — fires a callback when a sentinel element scrolls into view.
- *
- * Wraps the IntersectionObserver API and ties its lifecycle to the component:
- * the observer is created on mount and torn down on unmount, so there are no
- * leaks. `rootMargin` pre-loads slightly before the sentinel is fully visible.
- *
- * Usage:
- *   const sentinel = ref<HTMLElement | null>(null)
- *   useInfiniteScroll(sentinel, () => loadMore())
+ * Watches a sentinel element with an IntersectionObserver and invokes
+ * `onLoadMore` when it becomes visible. Kept dependency-free and framework
+ * agnostic so it is easy to reason about and test.
  */
 export function useInfiniteScroll(
-  target: Ref<HTMLElement | null>,
-  onIntersect: () => void,
-  options: { rootMargin?: string; enabled?: Ref<boolean> } = {}
+  sentinel: Ref<HTMLElement | null>,
+  { onLoadMore, canLoadMore, rootMargin = '300px' }: UseInfiniteScrollOptions,
 ) {
-  const { rootMargin = '300px', enabled } = options
   let observer: IntersectionObserver | null = null
 
-  function observe() {
-    // IntersectionObserver only exists in the browser — guard for SSR.
-    if (typeof IntersectionObserver === 'undefined' || !target.value) return
-
+  function observe(el: HTMLElement) {
     observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0]
-        if (entry?.isIntersecting) {
-          // Respect an optional enabled flag (e.g. don't load while a fetch is in flight).
-          if (!enabled || enabled.value) {
-            onIntersect()
-          }
+        if (entry?.isIntersecting && canLoadMore()) {
+          onLoadMore()
         }
       },
-      { rootMargin }
+      { rootMargin },
     )
-    observer.observe(target.value)
+    observer.observe(el)
   }
 
-  function disconnect() {
-    observer?.disconnect()
-    observer = null
-  }
-
-  onMounted(observe)
-  onBeforeUnmount(disconnect)
-
-  // Re-attach if the sentinel element is swapped out/in (e.g. v-if toggles).
-  watch(target, (el) => {
-    disconnect()
-    if (el) observe()
+  onMounted(() => {
+    if (sentinel.value) observe(sentinel.value)
   })
 
-  return { disconnect }
+  // Re-bind if the sentinel element is re-created (e.g. v-if toggles).
+  watch(sentinel, (el) => {
+    observer?.disconnect()
+    observer = null
+    if (el) observe(el)
+  })
+
+  onBeforeUnmount(() => {
+    observer?.disconnect()
+    observer = null
+  })
 }

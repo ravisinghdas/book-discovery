@@ -1,32 +1,28 @@
 /**
- * Type definitions for the Google Books API and our internal book models.
+ * Types for the Google Books API and the app's normalized book shapes.
  *
- * These live in `shared/` so they can be imported from both the Nuxt server
- * routes (`server/api/**`) and the client-side app code without duplication.
+ * The raw API responses are intentionally loose: almost every field on
+ * `volumeInfo` is optional. See the docs for the caveats:
+ * https://developers.google.com/books/docs/v1/using
  *
- * Every field that the Google Books API can omit is marked optional here —
- * the API is notoriously inconsistent, so the rest of the app treats missing
- * data as the norm rather than the exception.
+ * We normalize the raw volumes into `BookSummary` / `BookDetails` at the edge
+ * (see `app/utils/formatters.ts`) so the rest of the app works with predictable,
+ * fully-typed data instead of scattering optional-chaining everywhere.
  */
 
-/** Top-level shape returned by the `volumes` search endpoint. */
-export interface GoogleBooksResponse {
-  kind: string
-  /** Google's own estimate — known to be inaccurate, treat as a hint only. */
-  totalItems: number
-  /** Can be `undefined` even when `totalItems > 0` (documented API quirk). */
-  items?: GoogleBookVolume[]
+/** Cover image variants returned by the API (any of them may be missing). */
+export interface ImageLinks {
+  smallThumbnail?: string
+  thumbnail?: string
+  small?: string
+  medium?: string
+  large?: string
+  extraLarge?: string
 }
 
-/** A single volume (book) entry. */
-export interface GoogleBookVolume {
-  id: string
-  volumeInfo: VolumeInfo
-}
-
-/** The descriptive metadata for a volume. Most fields are optional. */
+/** The `volumeInfo` object on a raw Google Books volume. */
 export interface VolumeInfo {
-  title: string
+  title?: string
   subtitle?: string
   authors?: string[]
   publisher?: string
@@ -38,29 +34,44 @@ export interface VolumeInfo {
   averageRating?: number
   ratingsCount?: number
   language?: string
-  previewLink?: string
-  infoLink?: string
 }
 
-/** Cover art in various sizes. All optional; URLs may be insecure `http://`. */
-export interface ImageLinks {
-  smallThumbnail?: string
-  thumbnail?: string
-  small?: string
-  medium?: string
-  large?: string
-  extraLarge?: string
+/** A single raw volume as returned by the API. */
+export interface GoogleBookVolume {
+  id: string
+  volumeInfo?: VolumeInfo
+}
+
+/** The raw search response. `items` can be missing even when totalItems > 0. */
+export interface GoogleBooksResponse {
+  kind: string
+  totalItems: number
+  items?: GoogleBookVolume[]
 }
 
 /**
- * The trimmed-down book model we persist in the shortlist store.
- * We store only what the shortlist UI needs so localStorage stays small and
- * we never depend on re-fetching a volume to render a saved card.
+ * Normalized shape used across search results, cards and the shortlist.
+ * Everything is guaranteed present (with sensible fallbacks) except the
+ * thumbnail/year which are explicitly nullable so the UI can branch on them.
  */
-export interface ShortlistedBook {
+export interface BookSummary {
   id: string
   title: string
   authors: string[]
   thumbnail: string | null
   publishedYear: string | null
+}
+
+/** Normalized shape for the detail page. Extends the summary. */
+export interface BookDetails extends BookSummary {
+  subtitle: string | null
+  description: string | null
+  publisher: string | null
+  publishedDate: string | null
+  pageCount: number | null
+  categories: string[]
+  cover: string | null
+  averageRating: number | null
+  ratingsCount: number | null
+  language: string | null
 }

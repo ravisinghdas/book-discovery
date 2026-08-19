@@ -1,136 +1,116 @@
-import type { GoogleBookVolume, GoogleBooksResponse } from '~~/shared/types/book'
+import type { BookSummary, GoogleBooksResponse } from '~~/shared/types/book'
+import { toBookSummary } from '~/utils/formatters'
 
-/** How many results we request per page (Google allows up to 40). */
 const PAGE_SIZE = 20
-
-/** Debounce window for the search input, in milliseconds. */
-const DEBOUNCE_MS = 300
+const DEBOUNCE_MS = 350
 
 /**
- * useBookSearch — owns all search state and the talking-to-the-API logic.
+ * Encapsulates the search page's data concerns:
+ *  - debounced querying as the user types
+ *  - cursor-based pagination for infinite scroll (`startIndex`)
+ *  - de-duplication (the API sometimes returns overlapping items)
+ *  - stale-response guarding via a monotonically increasing request id
  *
- * Responsibilities:
- *  - Debounce the query so we don't fire a request on every keystroke.
- *  - Fetch the first page (search) and subsequent pages (loadMore).
- *  - Track granular loading flags so the UI can show skeletons vs. a spinner.
- *  - Cope with Google's quirks: missing `items`, duplicate ids across pages,
- *    and an unreliable `totalItems`.
- *  - Ignore out-of-order responses when the query changes mid-flight.
+ * The component stays declarative and just reacts to the returned refs.
  */
 export function useBookSearch() {
   const query = ref('')
-  const books = ref<GoogleBookVolume[]>([])
-  const isLoading = ref(false) // first page / fresh search
-  const isLoadingMore = ref(false) // appending a page
-  const hasMore = ref(false)
-  const error = ref<string | null>(null)
+  const books = ref<BookSummary[]>([])
   const totalItems = ref(0)
-  const hasSearched = ref(false) // distinguishes "no query yet" from "no results"
 
-  const startIndex = ref(0)
+  const isLoading = ref(false) // initial load for a new query
+  const isLoadingMore = ref(false) // subsequent pages
+  const error = ref<string | null>(null)
+  const hasSearched = ref(false)
 
-  // Bumped on every fresh search so stale in-flight responses can be discarded.
-  let requestToken = 0
+  const hasMore = computed(
+    () => books.value.length > 0 && books.value.length < totalItems.value,
+  )
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null
+  // Guards against out-of-order responses when the user types quickly.
+  let latestRequestId = 0
 
   async function fetchPage(reset: boolean) {
-    const term = query.value.trim()
+    const q = query.value.trim()
+    if (!q) return
 
-    // Empty query resets to the initial (pre-search) state.
-    if (!term) {
-      books.value = []
-      totalItems.value = 0
-      hasMore.value = false
-      hasSearched.value = false
-      error.value = null
-      return
-    }
+    if (!reset && (isLoadingMore.value || !hasMore.value)) return
 
-    const token = ++requestToken
+    const requestId = ++latestRequestId
+    const startIndex = reset ? 0 : books.value.length
 
-    if (reset) {
-      isLoading.value = true
-      startIndex.value = 0
-      error.value = null
-    } else {
-      isLoadingMore.value = true
-    }
+    if (reset) isLoading.value = true
+    else isLoadingMore.value = true
+    error.value = null
 
     try {
       const data = await $fetch<GoogleBooksResponse>('/api/books/search', {
-        params: { q: term, startIndex: startIndex.value, maxResults: PAGE_SIZE }
+        params: { q, startIndex, maxResults: PAGE_SIZE },
       })
 
-      // A newer search started while this was in flight — drop the result.
-      if (token !== requestToken) return
+      // A newer request superseded this one — discard the result.
+      if (requestId !== latestRequestId) return
 
-      const items = data.items ?? [] // `items` can be missing even with totalItems > 0
+      const incoming = (data.items ?? []).map(toBookSummary)
       totalItems.value = data.totalItems ?? 0
 
       if (reset) {
-        books.value = items
+        books.value = incoming
       } else {
-        // Dedupe: Google occasionally repeats ids across page boundaries.
         const seen = new Set(books.value.map((b) => b.id))
-        books.value.push(...items.filter((b) => !seen.has(b.id)))
+        books.value = [...books.value, ...incoming.filter((b) => !seen.has(b.id))]
       }
-
-      startIndex.value += items.length
-
-      // A short page (or an empty one) means we've reached the end.
-      hasMore.value = items.length === PAGE_SIZE
       hasSearched.value = true
-    } catch (err) {
-      if (token !== requestToken) return
-      console.error('[useBookSearch] search failed:', err)
+    } catch {
+      if (requestId !== latestRequestId) return
       error.value = 'Something went wrong while searching. Please try again.'
-      hasMore.value = false
     } finally {
-      if (token === requestToken) {
+      if (requestId === latestRequestId) {
         isLoading.value = false
         isLoadingMore.value = false
       }
     }
   }
 
-  /** Run a fresh search from the top. */
-  function search() {
-    return fetchPage(true)
-  }
-
-  /** Append the next page. No-ops if already loading or nothing left. */
   function loadMore() {
-    if (isLoading.value || isLoadingMore.value || !hasMore.value) return
     return fetchPage(false)
   }
 
-  /** Retry after an error, keeping the current query. */
+  /** Retry the current query after an error. */
   function retry() {
     return fetchPage(true)
   }
 
-  // Debounced reactive search: wait for typing to settle before firing.
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null
-  watch(query, () => {
+  watch(query, (value) => {
     if (debounceTimer) clearTimeout(debounceTimer)
+
+    if (!value.trim()) {
+      books.value = []
+      totalItems.value = 0
+      hasSearched.value = false
+      error.value = null
+      isLoading.value = false
+      return
+    }
+
     debounceTimer = setTimeout(() => fetchPage(true), DEBOUNCE_MS)
   })
 
-  onBeforeUnmount(() => {
+  onScopeDispose(() => {
     if (debounceTimer) clearTimeout(debounceTimer)
   })
 
   return {
     query,
     books,
+    totalItems,
     isLoading,
     isLoadingMore,
-    hasMore,
     error,
-    totalItems,
     hasSearched,
-    search,
+    hasMore,
     loadMore,
     retry,
-    PAGE_SIZE
   }
 }

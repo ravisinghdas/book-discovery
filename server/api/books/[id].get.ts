@@ -1,20 +1,26 @@
 import type { GoogleBookVolume } from '~~/shared/types/book'
 
 /**
- * Proxy route for a single Google Books volume by ID.
+ * GET /api/books/:id
  *
- *   GET /api/books/:id
- *
- * Same rationale as the search route — the API key stays on the server.
+ * Proxies the Google Books "single volume" endpoint. As with search, the API
+ * key is injected server-side only.
  */
 export default defineEventHandler(async (event): Promise<GoogleBookVolume> => {
-  const { googleBooksApiKey } = useRuntimeConfig()
+  const config = useRuntimeConfig(event)
   const id = getRouterParam(event, 'id')
 
   if (!id) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Volume ID is required'
+      statusMessage: 'A volume id is required.',
+    })
+  }
+
+  if (!config.googleBooksApiKey) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Server is missing the Google Books API key.',
     })
   }
 
@@ -22,16 +28,13 @@ export default defineEventHandler(async (event): Promise<GoogleBookVolume> => {
     return await $fetch<GoogleBookVolume>(
       `https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(id)}`,
       {
-        params: {
-          ...(googleBooksApiKey ? { key: googleBooksApiKey } : {})
-        }
-      }
+        params: { key: config.googleBooksApiKey },
+      },
     )
-  } catch (error) {
-    console.error(`[api/books/${id}] Google Books request failed:`, error)
+  } catch {
     throw createError({
       statusCode: 502,
-      statusMessage: 'Failed to fetch volume details'
+      statusMessage: 'Failed to fetch this book from the Google Books API.',
     })
   }
 })
