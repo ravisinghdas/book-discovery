@@ -9,13 +9,13 @@ import type {
  * Google Books occasionally returns cover URLs over plain HTTP, which get
  * blocked as mixed content on an HTTPS site. Force HTTPS so covers always load.
  */
-export function secureImageUrl(url?: string | null): string | null {
+function secureImageUrl(url?: string | null): string | null {
   if (!url) return null
   return url.replace(/^http:\/\//i, 'https://')
 }
 
 /** publishedDate comes in as "2005", "2005-11" or "2005-11-15" — grab the year. */
-export function extractYear(date?: string | null): string | null {
+function extractYear(date?: string | null): string | null {
   if (!date) return null
   const match = date.match(/\d{4}/)
   return match ? match[0] : null
@@ -73,7 +73,6 @@ export function toBookDetails(volume: GoogleBookVolume): BookDetails {
     subtitle: info.subtitle?.trim() || null,
     description: info.description?.trim() || null,
     publisher: info.publisher?.trim() || null,
-    publishedDate: info.publishedDate ?? null,
     pageCount: typeof info.pageCount === 'number' ? info.pageCount : null,
     categories: info.categories ?? [],
     cover: pickCover(info.imageLinks),
@@ -81,6 +80,5 @@ export function toBookDetails(volume: GoogleBookVolume): BookDetails {
       typeof info.averageRating === 'number' ? info.averageRating : null,
     ratingsCount:
       typeof info.ratingsCount === 'number' ? info.ratingsCount : null,
-    language: info.language ?? null,
   }
 }

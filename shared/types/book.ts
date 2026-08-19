@@ -67,11 +67,9 @@ export interface BookDetails extends BookSummary {
   subtitle: string | null
   description: string | null
   publisher: string | null
-  publishedDate: string | null
   pageCount: number | null
   categories: string[]
   cover: string | null
   averageRating: number | null
   ratingsCount: number | null
-  language: string | null
 }
