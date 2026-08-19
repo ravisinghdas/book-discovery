@@ -6,9 +6,11 @@
 </script>
 
 <template>
-  <div class="grid gap-8 md:grid-cols-[minmax(0,18rem)_1fr]" aria-hidden="true">
+  <div class="grid gap-10 md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr]" aria-hidden="true">
     <!-- Cover -->
-    <div class="skeleton aspect-[2/3] w-full max-w-xs rounded-card" />
+    <div class="mx-auto w-48 shrink-0 md:mx-0 md:w-full">
+      <div class="skeleton aspect-[2/3] w-full rounded-card" />
+    </div>
 
     <!-- Text column -->
     <div class="space-y-4">

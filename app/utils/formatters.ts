@@ -37,14 +37,20 @@ function pickThumbnail(links?: ImageLinks): string | null {
 /** Pick the largest reasonable cover for the detail hero. */
 function pickCover(links?: ImageLinks): string | null {
   if (!links) return null
-  return secureImageUrl(
+  const url =
+    links.extraLarge ??
     links.large ??
-      links.medium ??
-      links.small ??
-      links.thumbnail ??
-      links.smallThumbnail ??
-      null,
-  )
+    links.medium ??
+    links.small ??
+    links.thumbnail ??
+    links.smallThumbnail ??
+    null
+  const secure = secureImageUrl(url)
+  if (!secure) return null
+  // Google Books CDN URLs accept a `zoom` param that controls image size.
+  // Bumping it to 5 gets a full-cover-sized image regardless of which size
+  // field the API happened to populate.
+  return secure.replace(/([?&]zoom=)\d+/, '$15')
 }
 
 /** Normalize a raw volume into the compact shape used by cards + shortlist. */

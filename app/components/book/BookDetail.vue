@@ -25,10 +25,10 @@ const coverSrc = computed(() =>
 </script>
 
 <template>
-  <article class="grid gap-8 md:grid-cols-[minmax(0,18rem)_1fr]">
+  <article class="grid gap-10 md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr]">
     <!-- Cover column -->
-    <div class="mx-auto w-full max-w-xs md:mx-0">
-      <div class="overflow-hidden rounded-card bg-surface-raised shadow-md ring-1 ring-border">
+    <div class="mx-auto w-48 shrink-0 md:mx-0 md:w-full md:sticky md:top-24 md:self-start">
+      <div class="overflow-hidden rounded-card bg-surface-raised shadow-lg ring-1 ring-border">
         <img
           :src="coverSrc"
           :alt="`Cover of ${book.title}`"
