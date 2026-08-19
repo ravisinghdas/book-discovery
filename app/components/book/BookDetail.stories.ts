@@ -19,7 +19,7 @@ const completeBook: BookDetails = {
   subtitle: 'Inside the Hottest Business, Media, and Technology Success of Our Time',
   authors: ['David A. Vise', 'Mark Malseed'],
   thumbnail: 'https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1&source=gbs_api',
-  cover: 'https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=3&source=gbs_api',
+  cover: 'https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=5&source=gbs_api',
   publishedYear: '2005',
   publishedDate: '2005-11-15',
   publisher: 'Random House Digital, Inc.',

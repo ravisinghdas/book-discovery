@@ -24,19 +24,26 @@ export default meta
 type Story = StoryObj<typeof Badge>
 
 export const Neutral: Story = {}
-export const Primary: Story = { args: { label: 'Bestseller', variant: 'primary' } }
-export const Accent: Story = { args: { label: 'New', variant: 'accent' } }
 
-/** Several badges together, e.g. a category list on the detail page. */
+export const Primary: Story = {
+  args: { label: 'Bestseller', variant: 'primary' }
+}
+
+export const Accent: Story = {
+  args: { label: 'New', variant: 'accent' }
+}
+
+/** Several badges together — as they appear in a book's category list. */
 export const CategoryList: Story = {
-  render: (args) => ({
+  render: () => ({
     components: { Badge },
-    setup: () => ({ args }),
     template: `
       <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
-        <Badge label="Business & Economics" />
+        <Badge label="Business &amp; Economics" />
         <Badge label="Technology" variant="primary" />
         <Badge label="Self-Help" variant="accent" />
+        <Badge label="Science" />
+        <Badge label="Juvenile Fiction" variant="primary" />
       </div>
     `
   })
