@@ -6,7 +6,9 @@ Built with **Nuxt 4**, **Vue 3** (Composition API + `<script setup>`), **TypeScr
 
 ## Live demo
 
-_Not deployed yet — see [Status](#status). Runs locally at `http://localhost:3000`._
+**[book-discovery.ravisinghdas2026.workers.dev](https://book-discovery.ravisinghdas2026.workers.dev/)**
+
+Deployed on Cloudflare Workers. Runs locally at `http://localhost:3000`.
 
 ## Features
 
@@ -107,7 +109,7 @@ server/api/books/            Key-hiding proxy routes
 ## Status
 
 - ✅ Core features complete: search, detail, shortlist (persisted), responsive + accessible UI, error page, Storybook.
-- ⏳ **Deployment** — not yet deployed; needs the env var set on the host and the API key restricted by HTTP referrer.
+- ✅ **Deployed** to Cloudflare Workers — [live demo](https://book-discovery.ravisinghdas2026.workers.dev/).
 - ⏳ **Screen recording** — pending.
 - ❌ No automated tests yet (see Tradeoffs).
 
