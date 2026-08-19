@@ -1,208 +1,160 @@
 <script setup lang="ts">
 import SearchInput from '~/components/ui/SearchInput.vue'
+import BookGrid from '~/components/book/BookGrid.vue'
 import BookCard from '~/components/ui/BookCard.vue'
 import SkeletonCard from '~/components/ui/SkeletonCard.vue'
-import BookGrid from '~/components/book/BookGrid.vue'
 import { useBookSearch } from '~/composables/useBookSearch'
 import { useInfiniteScroll } from '~/composables/useInfiniteScroll'
+import { useShortlistStore } from '~~/stores/shortlist'
+import type { BookSummary } from '~~/shared/types/book'
 
-/**
- * Search page.
- *
- * Two visual modes sharing one search field:
- *  - Hero (centered) before any search — matches the reference landing view.
- *  - Compact (top-aligned) once a search is active, with results below.
- *
- * All async states are handled explicitly: initial, loading, empty, error,
- * loading-more, and end-of-results.
- */
+useHead({ title: 'Book Discovery' })
+
 const {
   query,
   books,
+  totalItems,
   isLoading,
   isLoadingMore,
-  hasMore,
   error,
-  totalItems,
   hasSearched,
+  hasMore,
   loadMore,
-  retry
+  retry,
 } = useBookSearch()
 
-// Show the big centered hero only before an active search.
-const showHero = computed(() => !hasSearched.value && !isLoading.value && !error.value)
+const store = useShortlistStore()
 
-// Quick-start category shortcuts from the reference design.
-const categories = [
-  { label: 'Fiction', emoji: '📖' },
-  { label: 'Science', emoji: '🔬' },
-  { label: 'Psychology', emoji: '🧠' },
-  { label: 'History', emoji: '🌍' },
-  { label: 'Self-Help', emoji: '💡' }
-]
+const sentinel = ref<HTMLElement | null>(null)
+useInfiniteScroll(sentinel, {
+  onLoadMore: loadMore,
+  canLoadMore: () => hasMore.value && !isLoadingMore.value && !isLoading.value,
+})
 
-function pickCategory(label: string) {
-  query.value = label
+function onToggle(book: BookSummary) {
+  store.toggle(book)
 }
 
-// Infinite scroll: observe the sentinel, load the next page when it appears.
-const sentinel = ref<HTMLElement | null>(null)
-const canLoadMore = computed(() => hasMore.value && !isLoading.value && !isLoadingMore.value)
-useInfiniteScroll(sentinel, loadMore, { enabled: canLoadMore })
+const showEmptyState = computed(
+  () =>
+    hasSearched.value &&
+    !isLoading.value &&
+    !error.value &&
+    books.value.length === 0,
+)
 
-useHead({
-  title: 'Book Discovery — Search',
-  meta: [
-    {
-      name: 'description',
-      content: 'Search millions of books by title, author, or genre and save your favorites.'
-    }
-  ]
-})
+const hints = [
+  { label: '📖 Fiction', value: 'fiction' },
+  { label: '🔬 Science', value: 'science' },
+  { label: '🧠 Psychology', value: 'psychology' },
+  { label: '🌍 History', value: 'history' },
+  { label: '💡 Self Help', value: 'self help' },
+]
+
+function applyHint(value: string) {
+  query.value = value
+}
 </script>
 
 <template>
-  <div class="mx-auto max-w-6xl px-4 sm:px-6">
-    <!-- ============ HERO / SEARCH ============ -->
+  <div>
+    <!-- ───── Hero: vertically centred landing ───── -->
     <section
-      :class="[
-        'flex flex-col items-center text-center transition-all',
-        showHero ? 'min-h-[70vh] justify-center gap-6' : 'gap-4 py-8'
-      ]"
+      v-if="!hasSearched"
+      class="flex min-h-[calc(100dvh-8rem)] flex-col items-center justify-center px-6 pb-16 pt-8 text-center"
     >
-      <div v-if="showHero" class="space-y-3">
-        <h1
-          class="bg-gradient-to-r from-brand-cyan to-brand-teal bg-clip-text text-5xl font-extrabold tracking-tight text-transparent sm:text-6xl"
-        >
-          Book Discovery
+      <!-- Brand -->
+      <div class="mb-8 flex flex-col items-center gap-3">
+        <h1 class="text-4xl font-extrabold tracking-tight sm:text-6xl">
+          <span class="text-gradient">Book Discovery</span>
         </h1>
-        <p class="text-base text-muted sm:text-lg">
+        <p class="max-w-xs text-sm text-content-muted sm:max-w-none sm:text-base">
           Search millions of titles. Save the ones that matter.
         </p>
       </div>
 
-      <div class="w-full max-w-2xl">
-        <SearchInput v-model="query" autofocus />
+      <!-- Search bar -->
+      <div class="w-full max-w-xl">
+        <SearchInput v-model="query" :loading="isLoading" />
       </div>
 
-      <!-- Category quick-picks (hero only) -->
-      <ul v-if="showHero" class="flex flex-wrap justify-center gap-2">
-        <li v-for="cat in categories" :key="cat.label">
-          <button
-            type="button"
-            class="flex items-center gap-1.5 rounded-full border border-hairline bg-white px-3.5 py-1.5 text-sm font-medium text-ink shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow"
-            @click="pickCategory(cat.label)"
-          >
-            <span aria-hidden="true">{{ cat.emoji }}</span>
-            <span>{{ cat.label }}</span>
-          </button>
-        </li>
-      </ul>
+      <!-- Hint chips -->
+      <div class="mt-5 flex flex-wrap justify-center gap-2">
+        <button
+          v-for="hint in hints"
+          :key="hint.value"
+          type="button"
+          class="rounded-full border border-border bg-surface px-4 py-1.5 text-sm text-content-muted shadow-sm transition hover:border-primary/40 hover:bg-surface-raised hover:text-content"
+          @click="applyHint(hint.value)"
+        >
+          {{ hint.label }}
+        </button>
+      </div>
     </section>
 
-    <!-- ============ RESULTS ============ -->
-    <section v-if="!showHero" class="pb-16" aria-live="polite">
-      <!-- Results heading -->
-      <div v-if="!isLoading && !error && books.length" class="mb-4">
-        <h2 class="text-lg font-semibold text-ink">
-          Results for “{{ query.trim() }}”
-        </h2>
-        <p class="text-sm text-muted">
-          Showing {{ books.length }}{{ totalItems ? ` of about ${totalItems.toLocaleString()}` : '' }} books
-        </p>
+    <!-- ───── Compact header once searching ───── -->
+    <template v-else>
+      <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+        <div class="flex-1">
+          <SearchInput v-model="query" :loading="isLoading" />
+        </div>
       </div>
 
-      <!-- Loading: skeleton grid -->
-      <BookGrid v-if="isLoading">
-        <SkeletonCard v-for="n in 10" :key="n" />
-      </BookGrid>
-
-      <!-- Error state -->
+      <!-- Error -->
       <div
-        v-else-if="error"
-        class="flex flex-col items-center gap-4 rounded-card border border-hairline bg-white py-16 text-center"
+        v-if="error"
+        class="rounded-card border border-danger/20 bg-danger/5 p-6 text-center"
       >
-        <div class="grid h-14 w-14 place-items-center rounded-full bg-red-50 text-red-500">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="h-7 w-7"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v4" />
-            <path d="M12 16h.01" />
-          </svg>
-        </div>
-        <div>
-          <p class="font-semibold text-ink">{{ error }}</p>
-          <p class="text-sm text-muted">Check your connection and try again.</p>
-        </div>
+        <p class="text-content">{{ error }}</p>
         <button
           type="button"
-          class="rounded-button bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
+          class="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-strong"
           @click="retry"
         >
-          Retry
+          Try again
         </button>
       </div>
 
+      <!-- Initial loading skeletons -->
+      <BookGrid v-else-if="isLoading">
+        <SkeletonCard v-for="n in 10" :key="n" />
+      </BookGrid>
+
       <!-- Empty state -->
-      <div
-        v-else-if="hasSearched && !books.length"
-        class="flex flex-col items-center gap-3 rounded-card border border-hairline bg-white py-16 text-center"
-      >
-        <div class="grid h-14 w-14 place-items-center rounded-full bg-slate-100 text-slate-400">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="h-7 w-7"
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
-        </div>
-        <div>
-          <p class="font-semibold text-ink">No books found for “{{ query.trim() }}”</p>
-          <p class="text-sm text-muted">Try a different title, author, or keyword.</p>
-        </div>
+      <div v-else-if="showEmptyState" class="py-20 text-center">
+        <p class="text-4xl">📚</p>
+        <p class="mt-3 text-lg font-semibold text-content">No books found</p>
+        <p class="mt-1 text-content-muted">Try a different title, author, or keyword.</p>
       </div>
 
-      <!-- Results grid -->
-      <template v-else>
+      <!-- Results -->
+      <div v-else-if="books.length">
+        <p class="mb-4 text-sm text-content-subtle">
+          {{ totalItems.toLocaleString() }} result{{ totalItems === 1 ? '' : 's' }}
+        </p>
+
         <BookGrid>
-          <BookCard v-for="book in books" :key="book.id" :book="book" />
+          <BookCard
+            v-for="book in books"
+            :key="book.id"
+            :book="book"
+            :shortlisted="store.isShortlisted(book.id)"
+            @toggle="onToggle"
+          />
+          <template v-if="isLoadingMore">
+            <SkeletonCard v-for="n in 5" :key="`more-${n}`" />
+          </template>
         </BookGrid>
 
-        <!-- Infinite-scroll sentinel + loading-more indicator -->
-        <div ref="sentinel" class="h-px w-full" />
-
-        <div v-if="isLoadingMore" class="flex justify-center py-8">
-          <span
-            class="h-6 w-6 animate-spin rounded-full border-2 border-primary/30 border-t-primary"
-            role="status"
-            aria-label="Loading more books"
-          />
-        </div>
+        <div ref="sentinel" class="h-px w-full" aria-hidden="true" />
 
         <p
-          v-else-if="!hasMore && books.length"
-          class="py-8 text-center text-sm text-muted"
+          v-if="!hasMore && books.length"
+          class="py-8 text-center text-sm text-content-subtle"
         >
-          You’ve reached the end of the results.
+          You've seen everything — happy reading!
         </p>
-      </template>
-    </section>
+      </div>
+    </template>
   </div>
 </template>
