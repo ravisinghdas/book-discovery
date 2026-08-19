@@ -1,90 +1,82 @@
 <script setup lang="ts">
 /**
- * SearchInput — the white pill search field from the reference design.
- *
- * Presentational and controlled via v-model. Debouncing is intentionally NOT
- * here — it lives in useBookSearch so the timing rule sits next to the fetch
- * logic. This component just owns the icon, clear button, and focus behaviour.
+ * SearchInput — the pill search field.
+ * Presentational, controlled via v-model. Shows a spinner while `loading`, and
+ * a clear (×) button once there is text. Debouncing lives in useBookSearch.
  */
-import { ref } from 'vue'
-
 const model = defineModel<string>({ default: '' })
 
 withDefaults(
   defineProps<{
     placeholder?: string
-    autofocus?: boolean
+    loading?: boolean
   }>(),
   {
-    placeholder: 'Search by title, author, or genre...',
-    autofocus: false
-  }
+    placeholder: 'Search by title, author, or genre…',
+    loading: false,
+  },
 )
-
-const inputRef = ref<HTMLInputElement | null>(null)
-
-function clear() {
-  model.value = ''
-  inputRef.value?.focus()
-}
 </script>
 
 <template>
-  <div class="relative w-full">
+  <div
+    class="flex items-center gap-3 rounded-full border border-border bg-white px-5 py-3.5 shadow-sm transition hover:shadow-md focus-within:shadow-md focus-within:ring-2 focus-within:ring-primary/20"
+  >
     <!-- Search icon -->
-    <span
-      class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted"
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      class="h-5 w-5 shrink-0 text-content-subtle"
       aria-hidden="true"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="h-5 w-5"
-      >
-        <circle cx="11" cy="11" r="8" />
-        <path d="m21 21-4.3-4.3" />
-      </svg>
-    </span>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3" stroke-linecap="round" />
+    </svg>
 
+    <!-- Input -->
     <input
-      ref="inputRef"
       v-model="model"
       type="search"
       :placeholder="placeholder"
-      :autofocus="autofocus"
-      role="searchbox"
       aria-label="Search for books"
       autocomplete="off"
-      class="w-full rounded-full border border-hairline bg-white py-3.5 pl-12 pr-12 text-base text-ink shadow-sm outline-none transition-shadow placeholder:text-muted focus:border-primary focus:shadow-md focus:ring-2 focus:ring-primary/30"
+      class="min-w-0 flex-1 bg-transparent text-base text-content placeholder:text-content-subtle focus:outline-none"
     />
 
-    <!-- Clear button -->
-    <button
-      v-if="model"
-      type="button"
-      aria-label="Clear search"
-      class="absolute inset-y-0 right-3 my-auto grid h-7 w-7 place-items-center rounded-full text-muted transition-colors hover:bg-slate-100 hover:text-ink"
-      @click="clear"
-    >
+    <!-- Spinner or clear -->
+    <span class="flex shrink-0 items-center">
       <svg
-        xmlns="http://www.w3.org/2000/svg"
+        v-if="loading"
+        class="h-5 w-5 animate-spin text-primary"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="h-4 w-4"
         aria-hidden="true"
       >
-        <path d="M18 6 6 18" />
-        <path d="m6 6 12 12" />
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z" />
       </svg>
-    </button>
+      <button
+        v-else-if="model"
+        type="button"
+        aria-label="Clear search"
+        class="rounded-full p-1 text-content-subtle transition hover:bg-surface-raised hover:text-content"
+        @click="model = ''"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          class="h-4 w-4"
+          aria-hidden="true"
+        >
+          <path d="M18 6 6 18M6 6l12 12" stroke-linecap="round" />
+        </svg>
+      </button>
+    </span>
   </div>
 </template>
