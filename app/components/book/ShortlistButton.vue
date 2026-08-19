@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useShortlistStore } from '~~/stores/shortlist'
 import { toShortlistedBook } from '~/utils/formatters'
 import type { GoogleBookVolume } from '~~/shared/types/book'

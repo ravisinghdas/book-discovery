@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import ShortlistButton from '~/components/book/ShortlistButton.vue'
 import { formatAuthors, formatPublishedYear, getThumbnail } from '~/utils/formatters'
 import type { GoogleBookVolume } from '~~/shared/types/book'

@@ -6,6 +6,8 @@
  * here — it lives in useBookSearch so the timing rule sits next to the fetch
  * logic. This component just owns the icon, clear button, and focus behaviour.
  */
+import { ref } from 'vue'
+
 const model = defineModel<string>({ default: '' })
 
 withDefaults(
